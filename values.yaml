@@ -3,4 +3,15 @@ name: mongodb-av
 # Kubernetes namespace to install into (can be overridden)
 namespace: ecuaalejo2013-dev
 
-replicaCount: 1
+replicaCount: 2
+auth:
+  enabled: false
+
+# Este chart requiere que exista config.content
+config:
+  content: |
+    net:
+      bindIpAll: true
+      port: 27017
+    replication:
+      replSetName: rs0

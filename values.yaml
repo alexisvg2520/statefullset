@@ -4,9 +4,12 @@ name: mi-mongodb
 namespace: ecuaalejo2013-dev
 
 
+replicaCount: 2
+
 auth:
   enabled: false
 
+# Config mínimo que exige el chart
 config:
   content: |
     net:
@@ -15,7 +18,7 @@ config:
     replication:
       replSetName: rs0
 
-# elige UNA de estas variantes y borra la otra
+# Servicio interno (no LB/NodePort)
 service:
   type: ClusterIP
   ports:
@@ -23,16 +26,21 @@ service:
       port: 27017
       targetPort: 27017
 
+# Puerto del contenedor (algunos charts lo usan)
 containerPorts:
   mongodb: 27017
 
-# sin "enabled:" aquí
+# Desactiva persistencia en sandbox para evitar problemas de PVC
+persistence:
+  enabled: false
+
+# Seguridad compatible con OpenShift (sin "enabled:" aquí)
 podSecurityContext:
-  runAsNonRoot: true
-  fsGroup: 1001
+  # OpenShift inyecta un UID arbitrario; no fuerces un UID concreto.
+  fsGroupChangePolicy: "OnRootMismatch"
 
 securityContext:
   allowPrivilegeEscalation: false
-  readOnlyRootFilesystem: true
+  readOnlyRootFilesystem: false   # Mongo necesita escribir
   capabilities:
     drop: ["ALL"]

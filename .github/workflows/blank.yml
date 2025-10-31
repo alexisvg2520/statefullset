@@ -47,4 +47,4 @@ jobs:
       - name: Deploy files
         run: |
           helm show chart oci://registry-1.docker.io/cloudpirates/mongodb 
-          helm upgrade my-mongodb oci://registry-1.docker.io/cloudpirates/mongodb   --reuse-values   --values values.yaml
+          helm upgrade mi-mongodb oci://registry-1.docker.io/cloudpirates/mongodb   --reuse-values   --values values.yaml

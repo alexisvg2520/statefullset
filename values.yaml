@@ -1,0 +1,6 @@
+name: mongodb-av
+
+# Kubernetes namespace to install into (can be overridden)
+namespace: ecuaalejo2013-dev
+
+replicaCount: 1

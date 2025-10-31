@@ -1,4 +1,4 @@
-name: CI-OC-2
+name: CI-MONGODB
 
 on: 
   push:

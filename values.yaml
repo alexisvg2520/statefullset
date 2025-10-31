@@ -3,12 +3,10 @@ name: mi-mongodb
 # Kubernetes namespace to install into (can be overridden)
 namespace: ecuaalejo2013-dev
 
-replicaCount: 2
 
 auth:
   enabled: false
 
-# Config requerido por el chart
 config:
   content: |
     net:
@@ -17,19 +15,18 @@ config:
     replication:
       replSetName: rs0
 
-# Service con puerto válido
+# elige UNA de estas variantes y borra la otra
 service:
   type: ClusterIP
   ports:
-    mongodb:
+    - name: mongodb
       port: 27017
       targetPort: 27017
 
-# (Opcional) puertos del contenedor si el chart los expone
 containerPorts:
   mongodb: 27017
 
-# Quita cualquier "enabled:" dentro de securityContext/podSecurityContext
+# sin "enabled:" aquí
 podSecurityContext:
   runAsNonRoot: true
   fsGroup: 1001

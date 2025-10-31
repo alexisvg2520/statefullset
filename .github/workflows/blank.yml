@@ -5,24 +5,22 @@ on:
     branches: ["main"]
   workflow_dispatch:
 
+env:
+  NAMESPACE: ecuaalejo2013-dev
+  RELEASE: mi-mongodb
+  CHART: oci://registry-1.docker.io/cloudpirates/mongodb
+
 jobs:
   build:
-    # El tipo de máquina virtual donde se ejecutará el job
     runs-on: ubuntu-latest
-
-    # Los pasos que componen el job
     steps:
-      # 1. Clona tu repositorio en la máquina virtual
       - name: Checkout repository
         uses: actions/checkout@v4
 
   deploy:
-
     needs: build
     runs-on: ubuntu-latest
-
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -31,20 +29,38 @@ jobs:
           curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz | tar xz
           sudo mv oc /usr/local/bin/
           oc version
-      
+
       - name: Install Helm
         uses: azure/setup-helm@v3
         with:
           version: v3.12.0
-          
+
       - name: Log in Openshift
         uses: redhat-actions/oc-login@v1
         with:
           openshift_server_url: https://api.rm1.0a51.p1.openshiftapps.com:6443
           openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
-      
 
-      - name: Deploy files
+      - name: Select project (namespace)
         run: |
-          helm show chart oci://registry-1.docker.io/cloudpirates/mongodb 
-          helm upgrade mi-mongodb oci://registry-1.docker.io/cloudpirates/mongodb   --reuse-values   --values values.yaml
+          oc new-project "$NAMESPACE" || true
+          oc project "$NAMESPACE"
+
+      # (Opcional) Validación local del template para evitar port: 0 o securityContext.enabled
+      - name: Helm template sanity check
+        run: |
+          helm template "$RELEASE" "$CHART" -n "$NAMESPACE" -f values.yaml > rendered.yaml
+          if grep -n "port: 0" rendered.yaml; then echo "ERROR: port 0 detectado"; exit 1; fi
+          if grep -n "securityContext.enabled" rendered.yaml; then echo "ERROR: securityContext.enabled detectado"; exit 1; fi
+
+      # Limpia un Service inválido previo para que el upgrade no falle por port: 0
+      - name: Cleanup invalid Service (if any)
+        run: |
+          kubectl delete svc "$RELEASE" -n "$NAMESPACE" --ignore-not-found
+
+      - name: Helm upgrade --install (reset values)
+        run: |
+          helm upgrade --install "$RELEASE" "$CHART" \
+            -n "$NAMESPACE" \
+            --reset-values \
+            -f values.yaml
